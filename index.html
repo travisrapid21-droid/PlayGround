@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#041014" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="AERONYX — a high-fidelity procedural flight experience built for touch." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23041014'/%3E%3Cpath d='M8 38 32 23l24 15-8 2-16-9-16 9-8-2Z' fill='%23ffb454'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>AERONYX — Pacific Range</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div class="screen-fx" aria-hidden="true"></div>
+      <canvas id="hud" aria-hidden="true"></canvas>
+
+      <header class="topbar ui-layer">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 44 30" fill="none">
+              <path d="M2 19.2 22 8l20 11.2-7.1 1.3L22 14.4 9.1 20.5 2 19.2Z" fill="currentColor"/>
+              <path d="m22 1 4.6 9.2L22 8l-4.6 2.2L22 1Z" fill="currentColor" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="brand-type">
+            <span class="brand-name">AERONYX</span>
+            <span class="brand-sub">FLIGHT SYSTEMS</span>
+          </div>
+        </div>
+
+        <div class="mission-block">
+          <span class="eyebrow">SECTOR 07</span>
+          <strong>PACIFIC RANGE</strong>
+          <span class="mission-meta"><i></i> FREE FLIGHT</span>
+        </div>
+
+        <div class="top-actions">
+          <div class="weather-chip" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M17.5 18H7a4 4 0 0 1-.6-7.95A6 6 0 0 1 18 9.3a4.35 4.35 0 0 1-.5 8.7Z"/></svg>
+            <span>18°C <b>VIS 40 KM</b></span>
+          </div>
+          <button id="tiltButton" class="icon-button" type="button" aria-label="Enable motion tilt">
+            <svg viewBox="0 0 24 24"><rect x="7.2" y="2.5" width="9.6" height="19" rx="2.2"/><path d="M10 18.4h4"/><path d="m9.8 9.1 2.2-2.3 2.2 2.3M12 6.8v7.1"/></svg>
+            <span class="button-label">TILT</span>
+          </button>
+          <button id="cameraButton" class="icon-button" type="button" aria-label="Toggle camera">
+            <svg viewBox="0 0 24 24"><path d="M3.5 8.6h3l1.4-2h8.2l1.4 2h3v9.3h-17z"/><circle cx="12" cy="13" r="3.1"/></svg>
+            <span class="button-label">CHASE</span>
+          </button>
+          <button id="pauseButton" class="icon-button optional" type="button" aria-label="Pause">
+            <svg viewBox="0 0 24 24"><path d="M8.2 6.2v11.6M15.8 6.2v11.6"/></svg>
+            <span class="button-label">PAUSE</span>
+          </button>
+          <button id="soundButton" class="icon-button optional" type="button" aria-label="Mute sound">
+            <svg viewBox="0 0 24 24"><path d="M4 9.5h3.4L12 5.8v12.4L7.4 14.5H4z"/><path class="sound-wave" d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+            <span class="button-label">SOUND</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="flight-data ui-layer">
+        <div class="data-block data-speed">
+          <span class="data-key">AIRSPEED</span>
+          <div class="data-value"><b id="speedValue">742</b><small>KM/H</small></div>
+          <span class="data-sub">M <b id="machValue">0.61</b></span>
+        </div>
+        <div class="data-block data-alt">
+          <span class="data-key">ALTITUDE</span>
+          <div class="data-value"><b id="altValue">2,100</b><small>M</small></div>
+          <span class="data-sub">VS <b id="vsValue">+0.0</b></span>
+        </div>
+      </div>
+
+      <div class="waypoint-card ui-layer" id="waypointCard">
+        <span class="eyebrow">NEXT WAYPOINT</span>
+        <div><strong id="waypointName">GATE 01</strong><b id="waypointDistance">4.8 KM</b></div>
+        <div class="waypoint-bar"><i id="waypointProgress"></i></div>
+      </div>
+
+      <div class="flight-status ui-layer" id="flightStatus" aria-live="polite"></div>
+      <div class="toast ui-layer" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="touch-ui ui-layer" id="touchUI">
+        <div class="stick-wrap" id="stickWrap">
+          <span class="control-caption">PITCH / ROLL</span>
+          <div class="stick-ring">
+            <span class="stick-cross"></span>
+            <div class="stick-knob" id="stickKnob">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="yaw-controls">
+          <button class="mini-control" id="yawLeft" type="button" aria-label="Yaw left">
+            <svg viewBox="0 0 24 24"><path d="M14 5 7 12l7 7M18.5 5v14"/></svg>
+          </button>
+          <span>RUDDER</span>
+          <button class="mini-control" id="yawRight" type="button" aria-label="Yaw right">
+            <svg viewBox="0 0 24 24"><path d="m10 5 7 7-7 7M5.5 5v14"/></svg>
+          </button>
+        </div>
+
+        <div class="throttle-wrap" id="throttleWrap">
+          <span class="control-caption">THRUST</span>
+          <div class="throttle-track" id="throttleTrack">
+            <div class="throttle-zebra"></div>
+            <div class="throttle-fill" id="throttleFill"></div>
+            <div class="throttle-knob" id="throttleKnob"></div>
+          </div>
+          <b class="throttle-readout" id="throttleReadout">72%</b>
+        </div>
+      </div>
+
+      <div class="desktop-hints ui-layer" id="desktopHints">
+        <span><kbd>W</kbd><kbd>S</kbd> PITCH</span>
+        <span><kbd>A</kbd><kbd>D</kbd> ROLL</span>
+        <span><kbd>Q</kbd><kbd>E</kbd> YAW</span>
+        <span><kbd>C</kbd> CAMERA</span>
+        <span><kbd>R</kbd> RESET</span>
+      </div>
+
+      <div class="intro ui-layer" id="intro">
+        <div class="intro-shade"></div>
+        <div class="intro-content">
+          <div class="intro-kicker"><span></span> LIVE FLIGHT ENVIRONMENT</div>
+          <h1><span>PACIFIC</span><em>RANGE</em></h1>
+          <p class="intro-copy">A living aerial landscape rendered in real time.<br />Chase the light across 36 kilometres of volcanic coast.</p>
+          <div class="intro-stats">
+            <div><b>36</b><span>KM WORLD</span></div>
+            <div><b>6-DOF</b><span>FLIGHT MODEL</span></div>
+            <div><b>60</b><span>FPS TARGET</span></div>
+          </div>
+          <div class="intro-actions">
+            <button id="startButton" class="start-button" type="button" aria-label="Start">
+              <span>Start</span>
+              <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+            </button>
+            <div class="intro-note">
+              <svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.3"/><path d="M10.5 18.4h3"/></svg>
+              <span>Touch flight controls · Optional motion tilt<br /><i>iOS will request motion access</i></span>
+            </div>
+          </div>
+          <div class="intro-features">
+            <span>VOLUMETRIC SKY</span><span>PBR AIRCRAFT</span><span>OCEAN SHADER</span><span>WAKE TURBULENCE</span>
+          </div>
+        </div>
+        <div class="intro-footer">
+          <span>AERONYX SIMULATION DIVISION · 2026</span>
+          <span>BUILD 1.0.4 / WEBGL</span>
+        </div>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="loader-mark">AERONYX</div>
+        <div class="loader-bar"><i id="loaderFill"></i></div>
+        <div class="loader-copy" id="loaderCopy">CALIBRATING FLIGHT SYSTEMS</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
